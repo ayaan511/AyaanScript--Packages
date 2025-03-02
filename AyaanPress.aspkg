@@ -1,0 +1,5 @@
+{
+  "name": "AyaanPress",
+  "commands": ["pressserport", "pressserve"],
+  "code": "from http.server import HTTPServer, BaseHTTPRequestHandler\n\nclass PressHandler(BaseHTTPRequestHandler):\n    def do_GET(self):\n        self.send_response(200)\n        self.send_header('Content-type', 'text/html')\n        self.end_headers()\n        self.wfile.write(b'<h1>AyaanPress Server Running!</h1>')\n\nserver = None\n\ndef pressserport(port):\n    global server\n    server = HTTPServer(('0.0.0.0', port), PressHandler)\n    print(f'AyaanPress running on port {port}...')\n    server.serve_forever()\n"
+}
