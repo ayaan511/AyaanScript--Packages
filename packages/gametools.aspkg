@@ -1,10 +1,11 @@
 @name gametools
 @version 0.1.0
 @description Game development toolkit — timers, input helpers, score tracking, animations, and sound effects.
+@author Ayaan
 @main main.ayaan
 ---file: main.ayaan---
 : gametools — library root.
-: Only loads submodules. No side effects, no output (like an npm package).
+: random comment
 : Use:  import gametools  then call any of the functions below.
 
 importayaan "timer.ayaan"
