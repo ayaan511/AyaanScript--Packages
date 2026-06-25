@@ -1,0 +1,221 @@
+@name gametools
+@version 0.1.0
+@description Game development toolkit — timers, input helpers, score tracking, animations, and sound effects.
+@main main.ayaan
+---file: main.ayaan---
+: gametools — library root.
+: Only loads submodules. No side effects, no output (like an npm package).
+: Use:  import gametools  then call any of the functions below.
+
+importayaan "timer.ayaan"
+importayaan "input.ayaan"
+importayaan "score.ayaan"
+importayaan "animation.ayaan"
+importayaan "sfx.ayaan"
+---file: sfx.ayaan---
+: sfx.ayaan — pre-baked sound effects via beep_tone
+:
+: Each call kicks off a non-blocking beep so it doesn't stall the game loop.
+
+: Bright jump sound — high tone, short
+func sfx_jump
+    beep_tone 880 80
+endfunc
+
+: Coin pickup — quick two-tone (high then higher)
+func sfx_coin
+    beep_tone 660 60
+endfunc
+
+: Death / fail — low tone, longer
+func sfx_die
+    beep_tone 110 250
+endfunc
+
+: Menu select / confirm
+func sfx_select
+    beep_tone 440 50
+endfunc
+
+: Power-up — ascending sweep handled by caller (placeholder beep)
+func sfx_power
+    beep_tone 550 120
+endfunc
+
+: Win fanfare — single big tone (caller can chain more)
+func sfx_win
+    beep_tone 988 300
+endfunc
+
+: Hit / damage — short low thud
+func sfx_hit
+    beep_tone 220 60
+endfunc
+---file: animation.ayaan---
+: animation.ayaan — common visual animation helpers
+:
+: Each takes the current frame number and parameters, returns the value
+: in `result`. Use them to drive Y offsets, scales, alphas, etc.
+
+: Sine bob in [-amp, +amp]. frame and speed are floats.
+func bob frame speed amp
+    set result = {sin(frame * speed) * amp}
+endfunc
+
+: Pulse in [base, base+amp]. Same as bob but always positive.
+func pulse frame speed base amp
+    set s = {sin(frame * speed) * 0.5 + 0.5}
+    set result = {base + amp * s}
+endfunc
+
+: Wobble: combines two sines for organic motion. Returns value in [-amp, +amp].
+func wobble frame speed amp
+    set s1 = {sin(frame * speed)}
+    set s2 = {sin(frame * speed * 1.7 + 1.0)}
+    set result = {(s1 * 0.6 + s2 * 0.4) * amp}
+endfunc
+
+: Screen-shake offset. Use to add to camera position when player gets hit.
+: intensity is the max pixel offset. Returns a random value in [-intensity, +intensity].
+func shake intensity
+    rand n -1000 1000
+    set result = {n * intensity / 1000}
+endfunc
+
+: Linear interpolation from a to b by t. Standard helper.
+func gt_lerp a b t
+    set result = {a + (b - a) * t}
+endfunc
+
+: Pulsing color brightness factor in [base, 1.0]. Use to multiply RGB.
+func brightness_pulse frame speed base
+    set s = {sin(frame * speed) * 0.5 + 0.5}
+    set result = {base + (1 - base) * s}
+endfunc
+---file: score.ayaan---
+: score.ayaan — score + high-score tracking
+:
+: High-score is persisted to a file under the user's config dir so it
+: survives across game runs.
+
+: Initialize the current game's score to 0.
+func score_reset
+    set __gt_score = 0
+endfunc
+
+: Add N points to the score.
+func score_add n
+    set __gt_score = {__gt_score + n}
+endfunc
+
+: Returns the current score.
+func score_get
+    set result = __gt_score
+endfunc
+
+: Load the high score for a named game (e.g. "geometry_dash") from disk.
+: Result placed in __gt_highscore as well as `result`.
+func highscore_load game
+    set path = "~/.config/aspkg_highscore_{game}.txt"
+    file_exists path -> ex
+    if ex == 1
+        readall path -> raw
+        set __gt_highscore = {int(raw)}
+    else
+        set __gt_highscore = 0
+    endif
+    set result = __gt_highscore
+endfunc
+
+: Save the current score as the high score if it beats the saved one.
+: Returns 1 if a new high score was set, 0 otherwise.
+func highscore_maybe_save game
+    set path = "~/.config/aspkg_highscore_{game}.txt"
+    file_exists path -> ex
+    set old = 0
+    if ex == 1
+        readall path -> raw
+        set old = {int(raw)}
+    endif
+    set result = 0
+    if __gt_score > old
+        writefile path __gt_score
+        set result = 1
+    endif
+endfunc
+---file: input.ayaan---
+: input.ayaan — edge-triggered key detection
+:
+: gui_key_down returns 1 every frame a key is held. Often you want "fired
+: exactly when the key transitions from up to down" (e.g. menu navigation,
+: jumping). This module tracks previous frame state per key in a dict.
+
+dict __gt_key_prev
+
+: Returns 1 ONLY on the frame the key was just pressed.
+func key_pressed key
+    gui_key_down key -> cur
+    dget __gt_key_prev key -> prev
+    set result = 0
+    if cur == 1
+        if prev != 1
+            set result = 1
+        endif
+    endif
+    dset __gt_key_prev key cur
+endfunc
+
+: Returns 1 ONLY on the frame the key was just released.
+func key_released key
+    gui_key_down key -> cur
+    dget __gt_key_prev key -> prev
+    set result = 0
+    if cur != 1
+        if prev == 1
+            set result = 1
+        endif
+    endif
+    dset __gt_key_prev key cur
+endfunc
+
+: Returns 1 if key is currently held.
+func key_held key
+    gui_key_down key -> cur
+    set result = cur
+endfunc
+---file: timer.ayaan---
+: timer.ayaan — cooldown / interval helpers
+:
+: Each "timer" is identified by a string name. State lives in the dict
+: __gt_timers so multiple timers can coexist.
+
+dict __gt_timers
+
+: Start (or restart) a named timer with N frames to count down.
+func timer_start name frames
+    dset __gt_timers name frames
+endfunc
+
+: Decrement a named timer by 1 (call once per frame).
+func timer_tick name
+    dget __gt_timers name -> t
+    if t > 0
+        set t = {t - 1}
+    endif
+    dset __gt_timers name t
+endfunc
+
+: Returns 1 if a named timer has reached 0 (i.e., expired).
+func timer_done name
+    dget __gt_timers name -> t
+    set result = 0
+    if t <= 0
+        set result = 1
+    endif
+endfunc
+
+: Returns the current remaining frame count for a timer.
+func timer_remaining name
+    dget __gt_timers name -> t
+    set result = t
+endfunc
