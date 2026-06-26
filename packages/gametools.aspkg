@@ -1,11 +1,36 @@
 @name gametools
 @version 0.1.0
-@description Game development toolkit — timers, input helpers, score tracking, animations, and sound effects.
 @author Ayaan
+@description Game development toolkit — timers, input helpers, score tracking, animations, and sound effects.
+@help Available commands:
+  TIMERS
+    timer_start name frames          - start/reset a named countdown
+    timer_tick name                  - decrement (call once per frame)
+    timer_done name                  - returns 1 if expired
+    timer_remaining name             - frames left
+  INPUT
+    key_pressed key                  - 1 only on edge (transition)
+    key_released key                 - 1 only on release edge
+    key_held key                     - 1 while held
+  SCORE
+    score_reset                      - reset current score to 0
+    score_add n                      - add N to score
+    score_get                        - returns current score
+    highscore_load game              - load saved high score
+    highscore_maybe_save game        - save if score > old high
+  ANIMATION
+    bob frame speed amp              - sine wave [-amp, +amp]
+    pulse frame speed base amp       - positive pulse
+    wobble frame speed amp           - mixed sine wobble
+    shake intensity                  - random shake offset
+    gt_lerp a b t                    - linear interpolation
+    brightness_pulse frame speed base - pulsing brightness factor
+  SOUND
+    sfx_jump / sfx_coin / sfx_die / sfx_select / sfx_power / sfx_win / sfx_hit
 @main main.ayaan
 ---file: main.ayaan---
 : gametools — library root.
-: random comment
+: Only loads submodules. No side effects, no output (like an npm package).
 : Use:  import gametools  then call any of the functions below.
 
 importayaan "timer.ayaan"
