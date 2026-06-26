@@ -1,0 +1,13 @@
+@name testpackage
+@version v1
+@author Ayaan
+@description test package to see packages work.
+@help run the command test to see if the package works.
+@license MIT
+@main main.ayaan
+---file: main.ayaan---
+: main.ayaan — entry point
+
+func hello
+    psyska -/ "Hello from testpackage!"
+endfunc
