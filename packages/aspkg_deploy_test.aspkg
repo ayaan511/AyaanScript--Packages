@@ -1,9 +1,0 @@
-@name aspkg_deploy_test
-@version 0.0.1
-@author server-test
-@description Smoke test from aspkg-server deploy verification.
-@help This is a test package created by the aspkg-server smoke test.
-  Safe to delete.
-@main main.ayaan
----file: main.ayaan---
-psyska -/ "test"
