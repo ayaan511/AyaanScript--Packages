@@ -1,9 +1,9 @@
 @name testpackage
-@version v1
+@version v2
 @author Ayaan
 @description test package to see packages work.
-@help run the command test to see if the package works.
 @license MIT
+@help run the command test to see if the package works.
 @main main.ayaan
 ---file: main.ayaan---
 : main.ayaan — entry point
